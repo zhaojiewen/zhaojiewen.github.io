@@ -1,0 +1,384 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  
+    <title>制作静态库 | 海青iOSNote</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="zhaojiewen">
+    
+    <meta name="description" content="制作静态库
+动态库：.dylib .framework
+静态库：.a .framework
+
+两者区别*：动态库时在程序运行时动态链接的，且可以被多个程序链接，相当于以动态库为中心，系统只会加载动态库到内存一次，这样动态库就始终只占一份内存，而静态库是提前把需要编译的实现文件编译为二进制文件，每个程">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="海青iOSNote" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="海青iOSNote" title="海青iOSNote"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="海青iOSNote">海青iOSNote</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜單">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/sitemap.xml">Sitemap</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:www.jianshu.com/users/c2cf7afe4f85/latest_articles">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/02/03/制作静态库/" title="制作静态库" itemprop="url">制作静态库</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles" title="zhaojiewen">zhaojiewen</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-02-03T09:27:48.000Z" itemprop="datePublished">2016-02-03</time>
+    更新日期:<time datetime="2016-02-03T09:23:32.000Z" itemprop="dateModified">2016-02-03</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目錄</strong>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#u5236_u4F5C_u9759_u6001_u5E93"><span class="toc-number">1.</span> <span class="toc-text">制作静态库</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#u5236_u4F5C-framework_u9759_u6001_u5E93"><span class="toc-number">1.1.</span> <span class="toc-text">制作.framework静态库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#u5236_u4F5C-a_u9759_u6001_u5E93"><span class="toc-number">1.2.</span> <span class="toc-text">制作.a静态库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#u4F7F_u7528_u811A_u672C_u751F_u6210_u96C6_u6210_u5305"><span class="toc-number">1.3.</span> <span class="toc-text">使用脚本生成集成包</span></a></li></ol></li></ol>
+		</div>
+		
+		<h2 id="u5236_u4F5C_u9759_u6001_u5E93"><a href="#u5236_u4F5C_u9759_u6001_u5E93" class="headerlink" title="制作静态库"></a>制作静态库</h2><ul>
+<li>动态库：<code>.dylib</code> <code>.framework</code></li>
+<li>静态库：<code>.a</code> <code>.framework</code></li>
+</ul>
+<p><strong>两者区别*</strong>：动态库时在程序运行时动态链接的，且可以被多个程序链接，相当于以动态库为中心，系统只会加载动态库到内存一次，这样动态库就始终只占一份内存，而静态库是提前把需要编译的实现文件编译为二进制文件，每个程序都需要复制一份，这是在使用静态库就决定了的特性，我们需要把静态库复制到工程文件内，供我们程序使用，而在制作时静态库时，我们可以选择暴露哪些文件给使用者，当然大部分都只需暴露头文件，我们当然也可以暴露实现文件，供我们参考学习，了解其中原理，众使我们修改了该文件的内容也没关系，因为该文件已经在制作静态库时已经编译成二进制文件，我们使用时不会再次编译该文件，资源文件如图片等也是可以我们替换，因为编译时只是简单的COPY，所以我们可以替换<code>SVProgressHUB</code>里的error或success成我们个性化的图片。苹果官方不允许我们App包含动态库。</p>
+<p><code>.a</code>与<code>.framework</code>的区别：<br>制作<code>.a</code> 都需要我们手动在<code>Header Search Paths</code>加头文件搜索路径<br>制作 <code>.framework</code>不需要</p>
+<h3 id="u5236_u4F5C-framework_u9759_u6001_u5E93"><a href="#u5236_u4F5C-framework_u9759_u6001_u5E93" class="headerlink" title="制作.framework静态库"></a>制作<code>.framework</code>静态库</h3><p>我们先说<code>.framework</code> 的制作过程，我们新建项目选择iOS的framwork ／ library ，建好后默认有一个头文件，这不是我们需要的，直接删掉，这里我们可以任意建文件夹和文件，把我们需要的功能库搭建好后，我们在Build phase &gt; Headers &gt; public 内添加我们需要暴露的文件，这样我们就建好了，然后我们分别选着模拟器 和 <code>Generic iOS Device</code> 来构建我们的product ，只有当我们构建完<code>Generic iOS Device</code>才能看到product内的target由红色变为黑色，这说明文件存在，构建完毕，然后我们右键 <code>show in finder</code> 找到编译好的文件，当然，这个文件只包含armv7 和arm64 架构的。我们还需要在<code>Mach－type</code>修改类型为<code>Static Library</code>,当然我们也可以制作动态库，只是不能发布。如果你制作动态库就需要在<code>Embedded Binaries</code> 内添加库。</p>
+<p>对于这几种CPU架构分类：</p>
+<p><strong>真机：</strong></p>
+<blockquote>
+<p>3gs ～ 4s ：armv7</p>
+<p>5 ～5c ：armv7s</p>
+<p>5s～ 6plus：arm64</p>
+</blockquote>
+<p><strong>模拟器：</strong></p>
+<blockquote>
+<p>4s~5 : i386</p>
+<p>5s~6plus : x86_64</p>
+</blockquote>
+<p>所以我们需要合并这几种包，并且都是debug包，我们一般发布给别人Release包，这需要我们Edit Scheme 选择Run &gt; info &gt;build configuration 为Release。Release包会比debug包要小一点，因为编译时作了代码优化，运行效率会高一点，但不会明显提高。</p>
+<p>为了保证都能运行，我们还需要合并包，这里的包是<code>.framework</code> 文件里的同名的无扩展名的二进制文件，使用下面命令合并，更多使用方法（ <code>man lipo</code>）</p>
+<blockquote>
+<p>lipo -create test1 test2 -output test3</p>
+</blockquote>
+<p>然后替换之前任意一个同名的二进制文件，这里多次强调同名，因为系统就是根据根据静态库名在静态库内寻找二进制文件，不然会报找不到该文件的错误。</p>
+<p>这样我们直接把替换二进制文件后的<code>.framework</code>文件拖进我们其它工程直接使用。</p>
+<p>当然如果我们还需要在静态库内使用资源文件，我们使用Bundle，在该项目内Add Target ，选择OSX 内的Bundle，我们需要删除一系列，修改sdk，修改product name等等。</p>
+<h3 id="u5236_u4F5C-a_u9759_u6001_u5E93"><a href="#u5236_u4F5C-a_u9759_u6001_u5E93" class="headerlink" title="制作.a静态库"></a>制作<code>.a</code>静态库</h3><p>类似制作<code>.framework</code>静态库，我们新建项目<code>XHQ_StaticFramework</code>，选择<code>Cocoa Touch Static Library</code><br>这时可以看到两个文件夹：<code>XHQ_StaticFramework</code> 和<code>Product</code> , Xcode  为我们自动建好的<code>XHQ_StaticFramework(.h/.m)</code>文件，一般我们只需要头文件，头文件写下我们所有需要公开的头文件，其它全部删掉，以便客户使用时只需引入这个头文件。Product存放我们生成的二进制文件。这里我们引入<uikit uikit.h="">框架，（网上多个版本都提到需要在<code>Build Phrases &gt;Link Binary With Libraries</code> 内添加<code>UIKit.framework</code>,但是作者没有添加也能正常使用，如果你知道原因请告诉我，谢谢！）</uikit></p>
+<p>我们在<code>XHQ_StaticFramework</code> 文件夹下建好我们自己的代码库后，把需要公开的头文件加到<code>Build Phases &gt;Headers</code> ，如果你没有这个目录，你需要手动<code>Editor &gt; Add Build Phases&gt; Add Headers Build Phases</code> 来添加。（提示：如果无法选择，你需要点击Build Phases 空白处后再重复上面的步骤。）</p>
+<p>点开 Headers 默认是有三个文件目录： <code>public&amp;&amp;private&amp;&amp;project</code>, 其中pulic和private都是放对外公开的文件，两者区别就是存储的路径可能不一样，我们可以在<code>Packaging&gt; Private/Public Headers Folder Path</code>设置路径。这里我们设置为<code>include/$(PROJECT_NAME)</code>,<code>project</code> 存放我们私有的文件。</p>
+<p>然后我们需要在<code>Build Settings</code>设置一些值:</p>
+<blockquote>
+<p>Dead Code Stripping &gt; NO(去掉不会执行到的代码)</p>
+<p>Strip Style &gt; Debugging Symbols</p>
+<p>Strip Debug Symbol During Copy &gt; NO（去掉Debug相关符号）</p>
+<p>Strip Linked Product &gt; NO</p>
+</blockquote>
+<p>这样做是为了后期产生bug时，我们能通过符号文件定位到我们需要的类的信息, 但是如果是iOS 或者 OSX则配置完全相反。<a href="http://support.hockeyapp.net/kb/client-integration-ios-mac-os-x/how-to-solve-symbolication-problems" target="_blank" rel="external">相关文章</a></p>
+<p>我们编译成功后就可以正常使用。使用时我们有两种方式</p>
+<blockquote>
+<p>一种是在其它项目中拖进该项目，在新项目中添加依赖 <code>Build Phases &gt; Target Dependencies</code>添加<code>.a</code>静态库，然后就是<code>link library</code> 内添加<code>.a</code>静态库;</p>
+<p>上面的方式适合我们自己内部使用，好处就是可以动态的修改静态库的文件，Xcode会根据是否需要重新编译来生成静态文件，而其实我们可以是直接使用生成的<code>.a</code>静态库和包涵头文件的include文件夹，只不过我们每次都需要配置Search Headers Paths，这种方式适合给外部使用。</p>
+</blockquote>
+<h3 id="u4F7F_u7528_u811A_u672C_u751F_u6210_u96C6_u6210_u5305"><a href="#u4F7F_u7528_u811A_u672C_u751F_u6210_u96C6_u6210_u5305" class="headerlink" title="使用脚本生成集成包"></a>使用脚本生成集成包</h3><p>相信上面的这些分别生成支持不同架构的包已经让你精疲力竭，我们有更加方便的方法制作通用的包，那就是使用脚本来构建支持多个架构的包.首先我们在前面制作framework的基础上添加<br><code>Aggragate</code> target，然后在<code>Build Phases</code> 内添加 <code>Run Script</code><br>把下面代码添加进去。直接运行，然后生成的包目录会自动打开。</p>
+<blockquote>
+<p>FMK_NAME=${PROJECT_NAME}</p>
+<pre><code># Install dir will be the final output to the framework.
+# The following line create it in the root folder of the current project.
+INSTALL_DIR=${SRCROOT}/Products/${FMK_NAME}.framework
+# Working dir will be deleted after the framework creation.
+WRK_DIR=build
+DEVICE_DIR=${WRK_DIR}/Release-iphoneos/${FMK_NAME}.framework
+SIMULATOR_DIR=${WRK_DIR}/Release-iphonesimulator/${FMK_NAME}.framework
+# -configuration ${CONFIGURATION}
+# Clean and Building both architectures.
+xcodebuild -configuration &quot;Release&quot; -target &quot;${FMK_NAME}&quot; -sdk iphoneos clean build
+xcodebuild -configuration &quot;Release&quot; -target &quot;${FMK_NAME}&quot; -sdk iphonesimulator clean build
+# Cleaning the oldest.
+if [ -d &quot;${INSTALL_DIR}&quot; ];then
+rm -rf &quot;${INSTALL_DIR}&quot;
+fi
+mkdir -p &quot;${INSTALL_DIR}&quot;
+cp -R &quot;${DEVICE_DIR}/&quot; &quot;${INSTALL_DIR}/&quot;
+# Uses the Lipo Tool to merge both binary files (i386 + armv6/armv7) into one Universal final product.
+lipo -create &quot;${DEVICE_DIR}/${FMK_NAME}&quot; &quot;${SIMULATOR_DIR}/${FMK_NAME}&quot; -output &quot;${INSTALL_DIR}/${FMK_NAME}&quot;
+rm -r &quot;${WRK_DIR}&quot;
+open &quot;${INSTALL_DIR}&quot;
+</code></pre></blockquote>
+<p><a href="http://www.jianshu.com/p/47545d3d83d7">参考文章</a></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles/2016/02/03/制作静态库/" data-title="制作静态库 | 海青iOSNote" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/02/03/OpenSSL与证书的制作/" title="">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  (no title)</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/02/03/Swift与JS的交互/"  title="Swift与JS的交互">
+ <strong>NEXT:</strong><br/> 
+ <span>Swift与JS的交互
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	<div class="ds-thread"></div>
+</section>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="顯示側邊欄"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目錄</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#u5236_u4F5C_u9759_u6001_u5E93"><span class="toc-number">1.</span> <span class="toc-text">制作静态库</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#u5236_u4F5C-framework_u9759_u6001_u5E93"><span class="toc-number">1.1.</span> <span class="toc-text">制作.framework静态库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#u5236_u4F5C-a_u9759_u6001_u5E93"><span class="toc-number">1.2.</span> <span class="toc-text">制作.a静态库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#u4F7F_u7528_u811A_u672C_u751F_u6210_u96C6_u6210_u5305"><span class="toc-number">1.3.</span> <span class="toc-text">使用脚本生成集成包</span></a></li></ol></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隱藏側邊欄"></a></div>
+<aside class="clearfix">
+
+  
+
+  
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 訂閱</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> Hello ,我是海青！ <br/>
+			This is my blog,believe it or not.</p>
+	</section>
+	 
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles" target="_blank" title="zhaojiewen">zhaojiewen</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+  </body>
+</html>

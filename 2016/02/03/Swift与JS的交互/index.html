@@ -1,0 +1,512 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Swift与JS的交互 | 海青iOSNote</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="zhaojiewen">
+    
+    <meta name="description" content="Swift与JS的交互原理同Object-C与JS交互的大同小异，只是方法形式改变了。首先我们需要引入iOS7.0出来的JavaScriptCore.framework
+JavaScriptCore
+JSContext是JS的执行环境。
+
+JSValue是Swift或者OC与JS交互的中间媒体，可以">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="海青iOSNote" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="海青iOSNote" title="海青iOSNote"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="海青iOSNote">海青iOSNote</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜單">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/sitemap.xml">Sitemap</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:www.jianshu.com/users/c2cf7afe4f85/latest_articles">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/02/03/Swift与JS的交互/" title="Swift与JS的交互" itemprop="url">Swift与JS的交互</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles" title="zhaojiewen">zhaojiewen</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-02-03T09:21:36.000Z" itemprop="datePublished">2016-02-03</time>
+    更新日期:<time datetime="2016-02-03T09:21:36.000Z" itemprop="dateModified">2016-02-03</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目錄</strong>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Swift_u4E0EJS_u7684_u4EA4_u4E92"><span class="toc-number">1.</span> <span class="toc-text">Swift与JS的交互</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#u539F_u7406"><span class="toc-number">1.1.</span> <span class="toc-text">原理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#JavaScriptCore"><span class="toc-number">1.1.1.</span> <span class="toc-text">JavaScriptCore</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#u5B9E_u6218"><span class="toc-number">1.2.</span> <span class="toc-text">实战</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Swift__u4E0E_JS__u57FA_u672C_u6570_u636E_u7C7B_u578B_u8F6C_u6362"><span class="toc-number">1.2.1.</span> <span class="toc-text">Swift 与 JS 基本数据类型转换</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u51FD_u6570_u8C03_u7528"><span class="toc-number">1.2.2.</span> <span class="toc-text">函数调用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u4F7F_u7528_u95ED_u5305"><span class="toc-number">1.2.3.</span> <span class="toc-text">使用闭包</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u4F7F_u7528JSExport__u65B9_u4FBF_u6784_u9020_uFF0C_u6211_u4EEC_u5F3A_u70C8_u63A8_u8350_u4F7F_u7528_u8FD9_u79CD_u65B9_u5F0F_u4E0EJS_u4EA4_u4E92"><span class="toc-number">1.2.4.</span> <span class="toc-text">使用JSExport 方便构造，我们强烈推荐使用这种方式与JS交互</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#User__u7C7B"><span class="toc-number">1.2.5.</span> <span class="toc-text">User 类</span></a></li></ol></li></ol></li></ol>
+		</div>
+		
+		<h2 id="Swift_u4E0EJS_u7684_u4EA4_u4E92"><a href="#Swift_u4E0EJS_u7684_u4EA4_u4E92" class="headerlink" title="Swift与JS的交互"></a>Swift与JS的交互</h2><h3 id="u539F_u7406"><a href="#u539F_u7406" class="headerlink" title="原理"></a>原理</h3><p>同Object-C与JS交互的大同小异，只是方法形式改变了。<br>首先我们需要引入iOS7.0出来的<code>JavaScriptCore.framework</code></p>
+<h4 id="JavaScriptCore"><a href="#JavaScriptCore" class="headerlink" title="JavaScriptCore"></a>JavaScriptCore</h4><ul>
+<li><p><code>JSContext</code>是JS的执行环境。</p>
+</li>
+<li><p><code>JSValue</code>是Swift或者OC与JS交互的中间媒体，可以转化为Swift对    象或者OC对象，也可以获取JS对象或方法。</p>
+</li>
+<li><code>JSExport</code> 是Swift或者OC与JS交互的协议，构造一个类，遵循JSExport协议，实现协议的方法和初始化协议的属性，然后把Swift或OC对象与JS对象关联，我们就可以在JS环境下使用关联的对象调用之前实现的协议的方法或取得属性值或修改属性值。</li>
+<li><code>JSManagedValue</code>：JSValue的内存管理器。</li>
+<li><code>JSVirtualMachine</code>：JSVirtualMachine为JavaScript的运行提供了底层资源.</li>
+</ul>
+<h3 id="u5B9E_u6218"><a href="#u5B9E_u6218" class="headerlink" title="实战"></a>实战</h3><h4 id="Swift__u4E0E_JS__u57FA_u672C_u6570_u636E_u7C7B_u578B_u8F6C_u6362"><a href="#Swift__u4E0E_JS__u57FA_u672C_u6570_u636E_u7C7B_u578B_u8F6C_u6362" class="headerlink" title="Swift 与 JS 基本数据类型转换"></a>Swift 与 JS 基本数据类型转换</h4><p>在Swift中我们推荐使用let类声明类(引用类型)，这是Swift加强了安全机制的结果。<br>首先初始化JS执行环境<code>let context = JSContext()</code>,并且为了捕获JS执行过程中得异常，我们给<code>self.jsContext?.exceptionHandler</code>闭包赋值。然后我们就正式开始与JS的交互，调用<code>context.evaluateScript()</code>方法执行任何JS代码，返回结果都是JSValue类型，使用<code>toObject()</code>方法转化成Swift对象，当然对象转换是一一对应的(如JS int类型应该转换成Swift Int类型)。我们还可以使用<code>objectForKeyedSubscript()</code>调用下角标函数（OC中我们直接使用[@”属性或者对象”]）来取得JSContext执行环境的对象或者方法，也可以取得JSValue一系列的属性等。</p>
+<p>代码如下</p>
+<pre><code>//声明执行环境
+let context = JSContext();
+self.jsContext = context;
+//捕获异常
+self.jsContext?.exceptionHandler = {(jsContext:JSContext!,exception:JSValue!) -&gt;Void in
+    jsContext.exception = exception;
+    print(exception);
+};
+let value = context.evaluateScript(&quot;2 + 2&quot;);
+print(value.toObject());
+//或者 区别print更简洁
+NSLog(&quot;\(value.toObject())&quot;);
+//直接定义JS数组
+context.evaluateScript(&quot;var array = [&apos;徐海青&apos;,123]&quot;)
+//下标获取JS数组
+let arrayValue = context.objectForKeyedSubscript(&quot;array&quot;)
+if(!arrayValue.isArray){
+    print(&quot;arrayValue不是数组&quot;)
+    return
+}
+//两种方式获取属性
+print(&quot;arrayValue 长度\(arrayValue.objectForKeyedSubscript(&quot;length&quot;)),第一种方式获取的值\(arrayValue.valueAtIndex(0)),第二种方式获取的值\(arrayValue.objectAtIndexedSubscript(1)),第二种方式获取的长度\(arrayValue.valueForProperty(&quot;length&quot;))&quot;);
+//两种方式设置array,越界自动扩展
+arrayValue.setObject(&quot;赵杰文&quot;, atIndexedSubscript: 4);
+arrayValue.setValue(&quot;水草草&quot;, atIndex: 6);
+//打印最后的array
+print(arrayValue);
+arrayValue.toArray()
+let array = arrayValue.toArray();
+//打印转换后的数组
+print(array);
+</code></pre><h4 id="u51FD_u6570_u8C03_u7528"><a href="#u51FD_u6570_u8C03_u7528" class="headerlink" title="函数调用"></a>函数调用</h4><p>我们使用JS注入方法到执行环境，然后使用<code>objectForKeyedSubscript()</code>取出方法</p>
+<pre><code> self.jsContext = JSContext();
+ //JS异常处理
+ self.jsContext?.exceptionHandler = { (jsContext:JSContext!,exception:JSValue!) -&gt;Void in
+     jsContext.exception = exception;
+     print(exception);
+ }
+ /*  js 函数
+     var func = function(value){
+     if(value &lt; 0) return;
+     if(value === 0) return 1;
+     return value * function(value - 1);
+     }
+ */
+ //拼接JS
+ let funStr = &quot;var fun = function (value){&quot; +
+              &quot;if(value &lt; 0) return;&quot; +
+              &quot;if(value === 0) return 1;&quot; +
+              &quot;return value * fun(value - 1);&quot; +
+              &quot;}&quot;;
+ //打印插入前的函数
+ print(funStr);
+ //插入JS
+ self.jsContext?.evaluateScript(funStr);
+ //下标获取函数
+ //let jsFunc = self.jsContext?.objectForKeyedSubscript(&quot;fun&quot;);
+ //或者
+ let jsFunc = self.jsContext?.evaluateScript(&quot;fun&quot;);
+ //打印插入后函数，应该和前面一样
+ print(jsFunc);
+ //传入参数
+let result = jsFunc?.callWithArguments([5]);
+ //打印结果
+ print(&quot;result = \(result)&quot;);
+</code></pre><h4 id="u4F7F_u7528_u95ED_u5305"><a href="#u4F7F_u7528_u95ED_u5305" class="headerlink" title="使用闭包"></a>使用闭包</h4><p>申明Swift闭包block，通过 <code>self.jsContext?.setObject()</code> 赋值</p>
+<pre><code>self.jsContext = JSContext();
+//JS异常处理
+self.jsContext?.exceptionHandler = { (jsContext:JSContext!,exception:JSValue!) -&gt;Void in
+    jsContext.exception = exception;
+    print(exception);
+}
+//往JS注入类
+let block = {(name:String,qq:String) -&gt; JSValue in
+    //let context = JSContext.currentContext();
+    let object = JSValue(newObjectInContext: self.jsContext);
+    object.setObject(name, forKeyedSubscript: &quot;name&quot;);
+    object.setValue(qq, forProperty: &quot;qq&quot;);
+    return object;
+}
+print(block);
+self.jsContext?.setObject(block(&quot;xuhaiqing&quot;,&quot;1716329344&quot;), forKeyedSubscript: &quot;User&quot;);
+//验证是否注入成功
+let user = self.jsContext?.evaluateScript(&quot;User&quot;);
+print(&quot;user.name = \(user?.objectForKeyedSubscript(&quot;name&quot;)) and user.qq =  \(user?.valueForProperty(&quot;qq&quot;))&quot; )
+</code></pre><h4 id="u4F7F_u7528JSExport__u65B9_u4FBF_u6784_u9020_uFF0C_u6211_u4EEC_u5F3A_u70C8_u63A8_u8350_u4F7F_u7528_u8FD9_u79CD_u65B9_u5F0F_u4E0EJS_u4EA4_u4E92"><a href="#u4F7F_u7528JSExport__u65B9_u4FBF_u6784_u9020_uFF0C_u6211_u4EEC_u5F3A_u70C8_u63A8_u8350_u4F7F_u7528_u8FD9_u79CD_u65B9_u5F0F_u4E0EJS_u4EA4_u4E92" class="headerlink" title="使用JSExport 方便构造，我们强烈推荐使用这种方式与JS交互"></a>使用JSExport 方便构造，我们强烈推荐使用这种方式与JS交互</h4><pre><code>var user = User(name: &quot;xuhaiqing&quot;, qq: &quot;1716329344&quot;);
+user.jsContext = self.jsContext;
+user.webView = self.webView;
+//关联
+print(self.jsContext);
+self.jsContext?.setObject(user, forKeyedSubscript: &quot;SwiftModel&quot;);
+print(user);
+//修改关联后的值
+self.jsContext?.evaluateScript(&quot;SwiftModel.name = &apos;zhaojiewen&apos;&quot;);
+self.jsContext?.evaluateScript(&quot;SwiftModel.descriptions()&quot;);
+print(user.name);
+print(user.qq);
+</code></pre><h4 id="User__u7C7B"><a href="#User__u7C7B" class="headerlink" title="User 类"></a>User 类</h4><pre><code>    //
+    //  User.swift
+    //  SwiftJSDemo
+    //
+    //  Created by haodf on 15/11/12.
+    //  Copyright © 2015年 haodf. All rights reserved.
+    //
+
+    import Foundation
+    import UIKit
+    import JavaScriptCore
+    @objc protocol UserJsToSwiftDelegate : JSExport{
+    var name:(String){get set};
+    var qq:(String){get set};
+    func callSystemCamera();
+    func showAlert(title:String,msg:String);
+    func callWithDict(dic:[String:AnyObject]);
+    func descriptions();
+    }
+    @objc class User :NSObject,UserJsToSwiftDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate {
+var name:(String);
+var qq:(String);
+var webView:UIWebView?
+var jsContext:JSContext?
+//author 徐海青
+//
+//初始化
+init(name:(String),qq:(String)){
+    self.name = name;
+    self.qq = qq;
+}
+//author 徐海青
+//
+//调用系统照相机
+@objc func callSystemCamera(){
+    let imagePickerViewController = UIImagePickerController();
+    imagePickerViewController.delegate = self;
+    UIApplication.sharedApplication().keyWindow?.addSubview(imagePickerViewController.view);
+    UIApplication.sharedApplication().keyWindow?.rootViewController?.addChildViewController(imagePickerViewController);
+}
+//author 徐海青
+//
+//弹框显示提示信息
+@objc func showAlert(title:String, msg: String) {
+    //调用系统的alert
+// let alertViewController = UIAlertController();
+// UIApplication.sharedApplication().keyWindow?.addSubview(alertViewController.view);
+//        UIApplication.sharedApplication().keyWindow?.rootViewController?.addChildViewController(alertViewController);
+    //调用JS的alert
+    let jsValue = self.jsContext?.objectForKeyedSubscript(&quot;alertFunc&quot;);
+    jsValue?.callWithArguments([title,msg]);
+
+}
+//author 徐海青
+//
+//双向交互
+@objc func callWithDict(dic: [String : AnyObject]) {
+    print(self.jsContext);
+    let funStr = &quot;var swiftInsertIntoJsFunc = function(arg){&quot; +
+    &quot;document.getElementById(&apos;swiftInsertIntoJsSpan&apos;).innerHTML = arg[&apos;name&apos;];&quot; +
+    &quot;}&quot;;
+    //打印插入前的函数
+    print(funStr);
+    //插入JS
+    self.jsContext?.evaluateScript(funStr);
+    //下标获取函数
+    //let jsFunc = self.jsContext?.objectForKeyedSubscript(&quot;fun&quot;);
+    //或者
+    let jsFunc = self.jsContext?.evaluateScript(&quot;swiftInsertIntoJsFunc&quot;);
+    //let insertFunc = self.jsContext?.objectForKeyedSubscript(&quot;swiftInsertIntoJsFunc&quot;);
+    print(dic);
+    print(jsFunc);
+    jsFunc?.callWithArguments([dic]);
+}
+
+//author 徐海青
+//
+//打印时显示的信息
+    @objc func descriptions() {
+        print(&quot;user.name = \(self.name) and user.qq = \(self.qq)&quot;)
+        }
+
+    @objc func imagePickerControllerDidCancel(picker: UIImagePickerController) {
+        picker.view.removeFromSuperview();
+        picker.removeFromParentViewController();
+    }
+
+}
+</code></pre>  
+	</div>
+		<footer class="article-footer clearfix">
+
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles/2016/02/03/Swift与JS的交互/" data-title="Swift与JS的交互 | 海青iOSNote" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/02/03/制作静态库/" title="制作静态库">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  制作静态库</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/02/02/hello-world/"  title="Hello World">
+ <strong>NEXT:</strong><br/> 
+ <span>Hello World
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	<div class="ds-thread"></div>
+</section>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="顯示側邊欄"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目錄</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Swift_u4E0EJS_u7684_u4EA4_u4E92"><span class="toc-number">1.</span> <span class="toc-text">Swift与JS的交互</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#u539F_u7406"><span class="toc-number">1.1.</span> <span class="toc-text">原理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#JavaScriptCore"><span class="toc-number">1.1.1.</span> <span class="toc-text">JavaScriptCore</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#u5B9E_u6218"><span class="toc-number">1.2.</span> <span class="toc-text">实战</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Swift__u4E0E_JS__u57FA_u672C_u6570_u636E_u7C7B_u578B_u8F6C_u6362"><span class="toc-number">1.2.1.</span> <span class="toc-text">Swift 与 JS 基本数据类型转换</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u51FD_u6570_u8C03_u7528"><span class="toc-number">1.2.2.</span> <span class="toc-text">函数调用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u4F7F_u7528_u95ED_u5305"><span class="toc-number">1.2.3.</span> <span class="toc-text">使用闭包</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u4F7F_u7528JSExport__u65B9_u4FBF_u6784_u9020_uFF0C_u6211_u4EEC_u5F3A_u70C8_u63A8_u8350_u4F7F_u7528_u8FD9_u79CD_u65B9_u5F0F_u4E0EJS_u4EA4_u4E92"><span class="toc-number">1.2.4.</span> <span class="toc-text">使用JSExport 方便构造，我们强烈推荐使用这种方式与JS交互</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#User__u7C7B"><span class="toc-number">1.2.5.</span> <span class="toc-text">User 类</span></a></li></ol></li></ol></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隱藏側邊欄"></a></div>
+<aside class="clearfix">
+
+  
+
+  
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 訂閱</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> Hello ,我是海青！ <br/>
+			This is my blog,believe it or not.</p>
+	</section>
+	 
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles" target="_blank" title="zhaojiewen">zhaojiewen</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+  </body>
+</html>
