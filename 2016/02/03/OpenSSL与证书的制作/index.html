@@ -4,18 +4,15 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>海青iOSNote</title>
+    <title>OpenSSL与证书的制作 | 海青iOSNote</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="zhaojiewen">
     
-    <meta name="description" content="title: OpenSSL与证书的制作
+    <meta name="description" content="证书标准X.509 - 这是一种证书标准,主要定义了证书中应该包含哪些内容.其详情可以参考RFC5280,SSL使用的就是这种证书标准.
 
-证书标准
-
-X.509 - 这是一种证书标准,主要定义了证书中应该包含哪些内容.其详情可以参考RFC5280,SSL使用的就是这种证书标准.
-
-编码格式同样的X.509证书,可能有不同的编码格式,目前有以下两种编码格式.PEM - Privacy Enha">
+编码格式同样的X.509证书,可能有不同的编码格式,目前有以下两种编码格式.
+  PEM - Privacy Enhanced Mail:  打开看文本格式,以">
     
     
     
@@ -75,15 +72,15 @@ X.509 - 这是一种证书标准,主要定义了证书中应该包含哪些内�
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2016/02/03/OpenSSL与证书的制作/" title="" itemprop="url"></a>
+      <a href="/2016/02/03/OpenSSL与证书的制作/" title="OpenSSL与证书的制作" itemprop="url">OpenSSL与证书的制作</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles" title="zhaojiewen">zhaojiewen</a>
     </p>
   <p class="article-time">
-    <time datetime="2016-02-03T09:30:41.000Z" itemprop="datePublished">2016-02-03</time>
-    更新日期:<time datetime="2016-02-03T09:30:41.000Z" itemprop="dateModified">2016-02-03</time>
+    <time datetime="2016-02-03T09:40:46.000Z" itemprop="datePublished">2016-02-03</time>
+    更新日期:<time datetime="2016-02-03T09:40:46.000Z" itemprop="dateModified">2016-02-03</time>
     
   </p>
 </header>
@@ -92,128 +89,102 @@ X.509 - 这是一种证书标准,主要定义了证书中应该包含哪些内�
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目錄</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#title_openssl"><span class="toc-number">1.</span> <span class="toc-text">title: OpenSSL与证书的制作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">2.</span> <span class="toc-text">证书标准</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#"><span class="toc-number">2.1.</span> <span class="toc-text">编码格式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">3.</span> <span class="toc-text">证书编码的转换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">4.</span> <span class="toc-text">自签名的证书</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#"><span class="toc-number">4.0.1.</span> <span class="toc-text">我们有两种方式生成根证书</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#"><span class="toc-number">4.0.2.</span> <span class="toc-text">接下来我们使用生成的根证书来签发证书</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">5.</span> <span class="toc-text">补充</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#rsa"><span class="toc-number">5.1.</span> <span class="toc-text">RSA加密&解密&签名&验证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1024rsa3destrousersrsaprivatekeypem"><span class="toc-number">5.1.1.</span> <span class="toc-text">产生1024位RSA私匙，用3DES加密它，口令为trousers，输出到文件rsaprivatekey.pem</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3des"><span class="toc-number">5.1.2.</span> <span class="toc-text">重置口令,去除3DES加密</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#"><span class="toc-number">5.1.3.</span> <span class="toc-text">重置口令，添加其他加密</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemtrousers_rsapublickeypem"><span class="toc-number">5.1.4.</span> <span class="toc-text">从文件rsaprivatekey.pem读取私匙，用口令trousers解密， 生成的公钥匙输出到文件rsapublickey.pem</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsapublickeypemplaintxt_ciphertxt"><span class="toc-number">5.1.5.</span> <span class="toc-text">用公钥匙rsapublickey.pem加密文件plain.txt， 输出到文件cipher.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemplaintxt_ciphertxt"><span class="toc-number">5.1.6.</span> <span class="toc-text">用私钥匙rsaprivatekey.pem加密文件plain.txt， 输出到文件cipher.txt（实际上系统会取私钥里的公钥来加密）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemciphertxtplaintxt"><span class="toc-number">5.1.7.</span> <span class="toc-text">使用私钥匙rsaprivatekey.pem解密密文cipher.txt，输出到文件plain.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemplaintxtsignaturebin"><span class="toc-number">5.1.8.</span> <span class="toc-text">用私钥匙rsaprivatekey.pem给文件plain.txt签名，输出到文件signature.bin</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsapublickeypemsignaturebinplaintxt"><span class="toc-number">5.1.9.</span> <span class="toc-text">用公钥匙rsapublickey.pem验证签名signature.bin，输出到文件plain.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemsignaturebinplaintxt"><span class="toc-number">5.1.10.</span> <span class="toc-text">用私匙rsaprivatekey.pem验证签名signature.bin，输出到文件plain.txt（实际上系统会取私钥里的公钥来验证）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">6.</span> <span class="toc-text">鸣谢</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#openssl"><span class="toc-number">6.1.</span> <span class="toc-text">由于openssl涉及功能加密，解密，数字签名，生成随机数等知识较多，作者旨在抛砖引玉。</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#u8BC1_u4E66_u6807_u51C6"><span class="toc-number">1.</span> <span class="toc-text">证书标准</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#u7F16_u7801_u683C_u5F0F"><span class="toc-number">1.1.</span> <span class="toc-text">编码格式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#u8BC1_u4E66_u7F16_u7801_u7684_u8F6C_u6362"><span class="toc-number">2.</span> <span class="toc-text">证书编码的转换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#u81EA_u7B7E_u540D_u7684_u8BC1_u4E66"><span class="toc-number">3.</span> <span class="toc-text">自签名的证书</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#u6211_u4EEC_u6709_u4E24_u79CD_u65B9_u5F0F_u751F_u6210_u6839_u8BC1_u4E66"><span class="toc-number">3.0.1.</span> <span class="toc-text">我们有两种方式生成根证书</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u63A5_u4E0B_u6765_u6211_u4EEC_u4F7F_u7528_u751F_u6210_u7684_u6839_u8BC1_u4E66_u6765_u7B7E_u53D1_u8BC1_u4E66"><span class="toc-number">3.0.2.</span> <span class="toc-text">接下来我们使用生成的根证书来签发证书</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#u8865_u5145"><span class="toc-number">4.</span> <span class="toc-text">补充</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#RSA_u52A0_u5BC6_26amp_3B_u89E3_u5BC6_26amp_3B_u7B7E_u540D_26amp_3B_u9A8C_u8BC1"><span class="toc-number">4.1.</span> <span class="toc-text">RSA加密&解密&签名&验证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#u4EA7_u751F1024_u4F4DRSA_u79C1_u5319_uFF0C_u75283DES_u52A0_u5BC6_u5B83_uFF0C_u53E3_u4EE4_u4E3Atrousers_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6rsaprivatekey-pem"><span class="toc-number">4.1.1.</span> <span class="toc-text">产生1024位RSA私匙，用3DES加密它，口令为trousers，输出到文件rsaprivatekey.pem</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u91CD_u7F6E_u53E3_u4EE4_2C_u53BB_u96643DES_u52A0_u5BC6"><span class="toc-number">4.1.2.</span> <span class="toc-text">重置口令,去除3DES加密</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u91CD_u7F6E_u53E3_u4EE4_uFF0C_u6DFB_u52A0_u5176_u4ED6_u52A0_u5BC6"><span class="toc-number">4.1.3.</span> <span class="toc-text">重置口令，添加其他加密</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u4ECE_u6587_u4EF6rsaprivatekey-pem_u8BFB_u53D6_u79C1_u5319_uFF0C_u7528_u53E3_u4EE4trousers_u89E3_u5BC6_uFF0C__u751F_u6210_u7684_u516C_u94A5_u5319_u8F93_u51FA_u5230_u6587_u4EF6rsapublickey-pem"><span class="toc-number">4.1.4.</span> <span class="toc-text">从文件rsaprivatekey.pem读取私匙，用口令trousers解密， 生成的公钥匙输出到文件rsapublickey.pem</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u516C_u94A5_u5319rsapublickey-pem_u52A0_u5BC6_u6587_u4EF6plain-txt_uFF0C__u8F93_u51FA_u5230_u6587_u4EF6cipher-txt"><span class="toc-number">4.1.5.</span> <span class="toc-text">用公钥匙rsapublickey.pem加密文件plain.txt， 输出到文件cipher.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u52A0_u5BC6_u6587_u4EF6plain-txt_uFF0C__u8F93_u51FA_u5230_u6587_u4EF6cipher-txt_uFF08_u5B9E_u9645_u4E0A_u7CFB_u7EDF_u4F1A_u53D6_u79C1_u94A5_u91CC_u7684_u516C_u94A5_u6765_u52A0_u5BC6_uFF09"><span class="toc-number">4.1.6.</span> <span class="toc-text">用私钥匙rsaprivatekey.pem加密文件plain.txt， 输出到文件cipher.txt（实际上系统会取私钥里的公钥来加密）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u4F7F_u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u89E3_u5BC6_u5BC6_u6587cipher-txt_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt"><span class="toc-number">4.1.7.</span> <span class="toc-text">使用私钥匙rsaprivatekey.pem解密密文cipher.txt，输出到文件plain.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u7ED9_u6587_u4EF6plain-txt_u7B7E_u540D_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6signature-bin"><span class="toc-number">4.1.8.</span> <span class="toc-text">用私钥匙rsaprivatekey.pem给文件plain.txt签名，输出到文件signature.bin</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u516C_u94A5_u5319rsapublickey-pem_u9A8C_u8BC1_u7B7E_u540Dsignature-bin_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt"><span class="toc-number">4.1.9.</span> <span class="toc-text">用公钥匙rsapublickey.pem验证签名signature.bin，输出到文件plain.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u79C1_u5319rsaprivatekey-pem_u9A8C_u8BC1_u7B7E_u540Dsignature-bin_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt_uFF08_u5B9E_u9645_u4E0A_u7CFB_u7EDF_u4F1A_u53D6_u79C1_u94A5_u91CC_u7684_u516C_u94A5_u6765_u9A8C_u8BC1_uFF09"><span class="toc-number">4.1.10.</span> <span class="toc-text">用私匙rsaprivatekey.pem验证签名signature.bin，输出到文件plain.txt（实际上系统会取私钥里的公钥来验证）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#u9E23_u8C22"><span class="toc-number">5.</span> <span class="toc-text">鸣谢</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#u7531_u4E8Eopenssl_u6D89_u53CA_u529F_u80FD_u52A0_u5BC6_uFF0C_u89E3_u5BC6_uFF0C_u6570_u5B57_u7B7E_u540D_uFF0C_u751F_u6210_u968F_u673A_u6570_u7B49_u77E5_u8BC6_u8F83_u591A_uFF0C_u4F5C_u8005_u65E8_u5728_u629B_u7816_u5F15_u7389_u3002"><span class="toc-number">5.1.</span> <span class="toc-text">由于openssl涉及功能加密，解密，数字签名，生成随机数等知识较多，作者旨在抛砖引玉。</span></a></li></ol></li></ol>
 		</div>
 		
-		<h2 id="title_openssl">title: OpenSSL与证书的制作</h2>
-
-<h2 id="">证书标准</h2>
-
-<p>X.509 - 这是一种证书标准,主要定义了证书中应该包含哪些内容.其详情可以参考RFC5280,SSL使用的就是这种证书标准.</p>
-
-<ul><br><h3 id="">编码格式</h3><br><br><p>同样的X.509证书,可能有不同的编码格式,目前有以下两种编码格式.</p><br><br><p><b>PEM - Privacy Enhanced Mail:</b>  打开看文本格式,以&#8221;&#8212;&#8212;-BEGIN&#8230;&#8221;开头, &#8220;&#8212;&#8212;-END&#8230;&#8221;结尾,内容是base64编码。<br>查看PEM格式证书的信息:</p><br><br><pre><code>openssl x509 -in certificate.pem -text -noout<br></code></pre><br><br><p>Apache和Nginx服务器偏向于使用这种编码格式.</p><br><br><p><b>DER - Distinguished Encoding Rules</b> ：打开看是二进制格式（ASCII编码）,不可读.<br>查看DER格式证书的信息:</p><br><br><pre><code>openssl x509 -in certificate.der -inform der -text -noout<br></code></pre><br><br><p>Java和Windows服务器偏向于使用这种编码格式.</p><br></ul>
-
-<p><b>相关的文件扩展名<br>这是比较误导人的地方,虽然我们已经知道有PEM和DER这两种编码格式,但文件扩展名并不一定就叫&#8221;PEM&#8221;或者&#8221;DER&#8221;,常见的扩展名除了PEM和DER还有以下这些,它们除了编码格式可能不同之外,内容也有差别,但大多数都能相互转换编码格式.</b></p>
-
+		<h2 id="u8BC1_u4E66_u6807_u51C6"><a href="#u8BC1_u4E66_u6807_u51C6" class="headerlink" title="证书标准"></a>证书标准</h2><p>X.509 - 这是一种证书标准,主要定义了证书中应该包含哪些内容.其详情可以参考RFC5280,SSL使用的就是这种证书标准.</p>
+<ul>
+<li><h3 id="u7F16_u7801_u683C_u5F0F"><a href="#u7F16_u7801_u683C_u5F0F" class="headerlink" title="编码格式"></a>编码格式</h3><p>同样的X.509证书,可能有不同的编码格式,目前有以下两种编码格式.</p>
+<p>  <b>PEM - Privacy Enhanced Mail:</b>  打开看文本格式,以”—–BEGIN…”开头, “—–END…”结尾,内容是base64编码。<br>  查看PEM格式证书的信息:</p>
+<pre><code>openssl x509 -in certificate.pem -text -noout
+</code></pre><p>  Apache和Nginx服务器偏向于使用这种编码格式.</p>
+<p>  <b>DER - Distinguished Encoding Rules</b> ：打开看是二进制格式（ASCII编码）,不可读.<br>  查看DER格式证书的信息:</p>
+<pre><code>openssl x509 -in certificate.der -inform der -text -noout
+</code></pre><p>  Java和Windows服务器偏向于使用这种编码格式.</p>
+</li>
+</ul>
+<p><b>相关的文件扩展名<br>这是比较误导人的地方,虽然我们已经知道有PEM和DER这两种编码格式,但文件扩展名并不一定就叫”PEM”或者”DER”,常见的扩展名除了PEM和DER还有以下这些,它们除了编码格式可能不同之外,内容也有差别,但大多数都能相互转换编码格式.</b></p>
 <p><b>CRT</b> - CRT应该是certificate的三个字母,其实还是证书的意思,常见于Nginx系统,有可能是PEM编码,也有可能是DER编码,大多数应该是PEM编码,相信你已经知道怎么辨别.</p>
-
 <p><b>CER </b> - 还是certificate,还是证书,常见于Windows系统,同样的,可能是PEM编码,也可能是DER编码,大多数应该是DER编码.</p>
-
 <p><b>KEY</b> - 通常用来存放一个公钥或者私钥,并非X.509证书,编码同样的,可能是PEM,也可能是DER.<br>查看KEY的办法:</p>
-
 <pre><code>openssl rsa -in mykey.key -text -noout
-</code></pre>
-
-<p>如果是DER格式的话,同理应该这样了:</p>
-
+</code></pre><p>如果是DER格式的话,同理应该这样了:</p>
 <pre><code>openssl rsa -in mykey.key -text -noout -inform der
-</code></pre>
-
-<p><b>CSR</b> - Certificate Signing Request,即证书签名请求,这个并不是证书,而是向权威证书颁发机构获得签名证书的申请,其核心内容是一个公钥(当然还附带了一些别的信息),在生成这个申请的时候,同时也会生成一个私钥,私钥要自己保管好.做过iOS APP的朋友都应该知道是怎么向苹果申请开发者证书的吧.<br>查看的办法:</p>
-
+</code></pre><p><b>CSR</b> - Certificate Signing Request,即证书签名请求,这个并不是证书,而是向权威证书颁发机构获得签名证书的申请,其核心内容是一个公钥(当然还附带了一些别的信息),在生成这个申请的时候,同时也会生成一个私钥,私钥要自己保管好.做过iOS APP的朋友都应该知道是怎么向苹果申请开发者证书的吧.<br>查看的办法:</p>
 <pre><code>openssl req -noout -text -in my.csr
-</code></pre>
-
-<p>(如果是DER格式的话照旧加上-inform der,这里不写了)</p>
-
-<p><b>PFX/P12</b> - predecessor of PKCS#12,对Nginx服务器来说,一般CRT和KEY是分开存放在不同文件中的,但Windows的IIS则将它们存在一个PFX文件中,(因此这个文件包含了证书及私钥)这样会不会不安全？应该不会,PFX通常会有一个&#8221;提取密码&#8221;,你想把里面的东西读取出来的话,它就要求你提供提取密码,PFX使用的是DER编码即ASCII编码,如何把PFX转换为PEM编码？</p>
-
+</code></pre><p> (如果是DER格式的话照旧加上-inform der,这里不写了)</p>
+<p><b>PFX/P12</b> - predecessor of PKCS#12,对Nginx服务器来说,一般CRT和KEY是分开存放在不同文件中的,但Windows的IIS则将它们存在一个PFX文件中,(因此这个文件包含了证书及私钥)这样会不会不安全？应该不会,PFX通常会有一个”提取密码”,你想把里面的东西读取出来的话,它就要求你提供提取密码,PFX使用的是DER编码即ASCII编码,如何把PFX转换为PEM编码？</p>
 <pre><code>openssl pkcs12 -in for-iis.pfx -out for-iis.pem -nodes
-</code></pre>
-
-<p>只提取证书</p>
-
-<pre><code>openssl pkcs12 -nokeys -in cacert.p12 -out ca2cert.pem
-</code></pre>
-
-<p>只提取秘钥对</p>
-
-<pre><code>openssl pkcs12 -nocerts -in cacert.p12 -out ca2cert.pem
-</code></pre>
-
-<p>使用-export提示你输入提取代码,否则直接报错。<br>生成pfx/p12的命令类似这样:</p>
-
+</code></pre><p>只提取证书</p>
+<pre><code>openssl pkcs12 -nokeys -in cacert.p12 -out ca2cert.pem 
+</code></pre><p>只提取秘钥对</p>
+<pre><code>openssl pkcs12 -nocerts -in cacert.p12 -out ca2cert.pem 
+</code></pre><p>使用-export提示你输入提取代码,否则直接报错。<br>生成pfx/p12的命令类似这样:</p>
 <pre><code>openssl pkcs12 -export -out certificate.pfx/p12 -inkey privateKey.key -in certificate.crt -certfile CACert.crt
-</code></pre>
-
-<p>其中CACert.crt是CA(权威证书颁发机构)的根证书,有的话也通过-certfile参数一起带进去.这么看来,PFX其实是个证书密钥库,这样通过钥匙串就能看到链结构。</p>
-
-<p><b>JKS</b> - 即Java Key Storage,这是Java的专利,跟OpenSSL关系不大,利用Java的一个叫&#8221;keytool&#8221;的工具,可以将PFX转为JKS,当然了,keytool也能直接生成JKS,不过在此就不多表了.</p>
-
-<h2 id="">证书编码的转换</h2>
-
-<pre><code>PEM转为DER openssl x509 -in cert.crt -outform der -out cert.der
+</code></pre><p>其中CACert.crt是CA(权威证书颁发机构)的根证书,有的话也通过-certfile参数一起带进去.这么看来,PFX其实是个证书密钥库,这样通过钥匙串就能看到链结构。</p>
+<p><b>JKS</b> - 即Java Key Storage,这是Java的专利,跟OpenSSL关系不大,利用Java的一个叫”keytool”的工具,可以将PFX转为JKS,当然了,keytool也能直接生成JKS,不过在此就不多表了.</p>
+<h2 id="u8BC1_u4E66_u7F16_u7801_u7684_u8F6C_u6362"><a href="#u8BC1_u4E66_u7F16_u7801_u7684_u8F6C_u6362" class="headerlink" title="证书编码的转换"></a>证书编码的转换</h2><pre><code>PEM转为DER openssl x509 -in cert.crt -outform der -out cert.der
 
 DER转为PEM openssl x509 -in cert.crt -inform der -outform pem -out cert.pem
-</code></pre>
-
-<p>(提示:要转换KEY文件也类似,只不过把x509换成rsa,要转CSR的话,把x509换成req&#8230;)</p>
-
+</code></pre><p>(提示:要转换KEY文件也类似,只不过把x509换成rsa,要转CSR的话,把x509换成req…)</p>
 <p><b>获得证书向权威证书颁发机构申请证书<br>用这命令生成一个 </b></p>
-
-<pre><code>    csr: openssl req -newkey rsa:2048 -new -nodes -keyout my.key -out my.csr
-</code></pre>
-
-<p>把csr交给权威证书颁发机构,权威证书颁发机构对此进行签名,完成.保留好csr,当权威证书颁发机构颁发的证书过期的时候,你还可以用同样的csr来申请新的证书,key保持不变.</p>
-
+<pre><code>csr: openssl req -newkey rsa:2048 -new -nodes -keyout my.key -out my.csr
+</code></pre><p>把csr交给权威证书颁发机构,权威证书颁发机构对此进行签名,完成.保留好csr,当权威证书颁发机构颁发的证书过期的时候,你还可以用同样的csr来申请新的证书,key保持不变.</p>
 <p><b>或者生成自签名的证书</b></p>
-
 <pre><code>openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem
-</code></pre>
-
-<p>在生成证书的过程中会要你填一堆的东西,其实真正要填的只有Common Name,通常填写你服务器的域名,如&#8221;yourcompany.com&#8221;,或者你服务器的IP地址,其它都可以留空的.<br>生产环境中还是不要使用自签的证书,否则浏览器会不认,或者如果你是企业应用的话能够强制让用户的浏览器接受你的自签证书也行.向权威机构要证书通常是要钱的,但现在也有免费的,仅仅需要一个简单的域名验证即可.有兴趣的话查查&#8221;沃通数字证书&#8221;.</p>
-
-<h2 id="">自签名的证书</h2>
-
-<ul><br><li><p>首先我们需要建好CA目录</p><br><br><pre><code>&gt; mkdir -p ./demoCA/{private,newcerts}<br>&gt; touch ./demoCA/index.txt<br>&gt; echo 01 &gt; ./demoCA/serial<br></code></pre><br><br><p>其中我们使用private 文件夹下得cakey.pem（配置文件的默认文件名，如果不知道当前系统openssl的配置文件的位置，可以使用  &gt;openssl ca  命令） 秘钥对或者使用-keyfile 指定private文件下的其他秘钥对来给二级或其他证书数字签名。</p></li><br></ul>
-
-<h4 id="">我们有两种方式生成根证书</h4>
-
-<p>第一种：这种方式不用自己生成秘钥，不用生成多余的证书请求文件，干净！</p>
-
+</code></pre><p>在生成证书的过程中会要你填一堆的东西,其实真正要填的只有Common Name,通常填写你服务器的域名,如”yourcompany.com”,或者你服务器的IP地址,其它都可以留空的.<br>生产环境中还是不要使用自签的证书,否则浏览器会不认,或者如果你是企业应用的话能够强制让用户的浏览器接受你的自签证书也行.向权威机构要证书通常是要钱的,但现在也有免费的,仅仅需要一个简单的域名验证即可.有兴趣的话查查”沃通数字证书”.</p>
+<h2 id="u81EA_u7B7E_u540D_u7684_u8BC1_u4E66"><a href="#u81EA_u7B7E_u540D_u7684_u8BC1_u4E66" class="headerlink" title="自签名的证书"></a>自签名的证书</h2><ul>
+<li><p>首先我们需要建好CA目录</p>
+<pre><code>&gt; mkdir -p ./demoCA/{private,newcerts}
+&gt; touch ./demoCA/index.txt
+&gt; echo 01 &gt; ./demoCA/serial
+</code></pre><p>其中我们使用private 文件夹下得cakey.pem（配置文件的默认文件名，如果不知道当前系统openssl的配置文件的位置，可以使用  &gt;openssl ca  命令） 秘钥对或者使用-keyfile 指定private文件下的其他秘钥对来给二级或其他证书数字签名。</p>
+</li>
+</ul>
+<h4 id="u6211_u4EEC_u6709_u4E24_u79CD_u65B9_u5F0F_u751F_u6210_u6839_u8BC1_u4E66"><a href="#u6211_u4EEC_u6709_u4E24_u79CD_u65B9_u5F0F_u751F_u6210_u6839_u8BC1_u4E66" class="headerlink" title="我们有两种方式生成根证书"></a>我们有两种方式生成根证书</h4><p>第一种：这种方式不用自己生成秘钥，不用生成多余的证书请求文件，干净！</p>
 <p>(这里我么使用自动生成秘钥对，采用配置文件默认秘钥对名称cakey.pem ，方便后面使用，当然你也可以使用其他名字 ，后面用-keyfile指定就OK了,过期时间不指定默认是30天)</p>
-
 <pre><code>$ openssl req -x509 -days 3560 -newkey rsa:2048 -keyout ./demoCA/private/cakey.pem -out cacert.pem
-</code></pre>
-
-<p>第二种:我么不推荐使用这种方式，也不建议使用明文方式的传入密码给秘钥加密。</p>
-
+</code></pre><p>第二种:我么不推荐使用这种方式，也不建议使用明文方式的传入密码给秘钥加密。</p>
 <pre><code>$ openssl genrsa -des3 -passout pass:xuhaiqing -out ./demoCA/private/cakey.pem 2048
 $ openssl req -new -days 3650 -key ./demoCA/private/cakey.pem -out careq.pem -passin pass:xuhaiqing
 $ openssl ca -selfsign -in careq.pem -out cacert.pem
-</code></pre>
-
-<h4 id="">接下来我们使用生成的根证书来签发证书</h4>
-
-<pre><code>$ openssl genrsa -out userkey.pem
+</code></pre><h4 id="u63A5_u4E0B_u6765_u6211_u4EEC_u4F7F_u7528_u751F_u6210_u7684_u6839_u8BC1_u4E66_u6765_u7B7E_u53D1_u8BC1_u4E66"><a href="#u63A5_u4E0B_u6765_u6211_u4EEC_u4F7F_u7528_u751F_u6210_u7684_u6839_u8BC1_u4E66_u6765_u7B7E_u53D1_u8BC1_u4E66" class="headerlink" title="接下来我们使用生成的根证书来签发证书"></a>接下来我们使用生成的根证书来签发证书</h4><pre><code>$ openssl genrsa -out userkey.pem
 $ openssl req -new -days 3560 -key userkey.pem -out userreq.pem
 $ openssl ca -in userreq.pem -out usercert.pem -keyfile cakey.pem -cert cacert.pem -policy policy_anything -extensions va_03
-</code></pre>
-
-<ul><br><li>-policy 指定签发策policy<em>anything，表示任何内容都可以,配置文件默认为policy</em>match,就是子签发证书的国家，城市等要与上一级匹配相等。</li><br><li>-extensions va<em>03 是子签发证书能够再次签发子证书，默认是子证书是不能再签发。查看配置文件x509</em>extensions = usr<em>cert，而usr</em>cert 的 basicConstraints=CA:FALSE，基本约束为false，我们可以修改为basicConstraints=CA:true，或者x509<em>extensions = v3</em>ca,以为v3_ca 的 basicConstraints=CA:true。</li><br></ul>
-
+</code></pre><ul>
+<li>-policy 指定签发策policy_anything，表示任何内容都可以,配置文件默认为policy_match,就是子签发证书的国家，城市等要与上一级匹配相等。</li>
+<li>-extensions va_03 是子签发证书能够再次签发子证书，默认是子证书是不能再签发。查看配置文件x509_extensions = usr_cert，而usr_cert 的 basicConstraints=CA:FALSE，基本约束为false，我们可以修改为basicConstraints=CA:true，或者x509_extensions = v3_ca,以为v3_ca 的 basicConstraints=CA:true。</li>
+</ul>
 <p>然后有人想导出公钥，有两种方式：<br>第一种从证书：$openssl x509 -in cacert.pem -pubkey -nonout &gt; capubkey.pem<br>第二种从秘钥：$openssl rsa -in cakey,pem -pubout -out capubkey.pem</p>
-
-<h2 id="">补充</h2>
-
-<h3 id="rsa">RSA加密&amp;解密&amp;签名&amp;验证</h3>
-
-<ul><br><h4 id="1024rsa3destrousersrsaprivatekeypem">产生1024位RSA私匙，用3DES加密它，口令为trousers，输出到文件rsaprivatekey.pem</h4><br><br><p>$ openssl genrsa -out rsaprivatekey.pem -passout pass:trousers -des3 1024</p><br><h4 id="3des">重置口令,去除3DES加密</h4><br><br><pre><code>$openssl rsa -in rsaprivatekey.pem -out rsaprivatekey.pem<br></code></pre><br><h4 id="">重置口令，添加其他加密</h4><br><br><pre><code>$openssl rsa -in rsaprivatekey.pem -passout pass:yourpassword -out -aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea rsaprivatekey.pem<br></code></pre><br><h4 id="rsaprivatekeypemtrousers_rsapublickeypem">从文件rsaprivatekey.pem读取私匙，用口令trousers解密， 生成的公钥匙输出到文件rsapublickey.pem</h4><br><br><pre><code>$ openssl rsa -in rsaprivatekey.pem -passin pass:trousers -pubout -out rsapubckey.pem<br></code></pre><br><h4 id="rsapublickeypemplaintxt_ciphertxt">用公钥匙rsapublickey.pem加密文件plain.txt， 输出到文件cipher.txt</h4><br><br><pre><code>$ openssl rsautl -encrypt -pubin -inkey rsapublickey.pem -in plain.txt -out cipher.txt<br></code></pre><br><h4 id="rsaprivatekeypemplaintxt_ciphertxt">用私钥匙rsaprivatekey.pem加密文件plain.txt， 输出到文件cipher.txt（实际上系统会取私钥里的公钥来加密）</h4><br><br><pre><code>$ openssl rsautl -encrypt -inkey rsapublickey.pem -in plain.txt -out cipher.txt<br></code></pre><br><h4 id="rsaprivatekeypemciphertxtplaintxt">使用私钥匙rsaprivatekey.pem解密密文cipher.txt，输出到文件plain.txt</h4><br><br><pre><code>$ openssl rsautl -decrypt -inkey rsaprivatekey.pem -in cipher.txt -out plain.txt<br></code></pre><br><h4 id="rsaprivatekeypemplaintxtsignaturebin">用私钥匙rsaprivatekey.pem给文件plain.txt签名，输出到文件signature.bin</h4><br><br><pre><code>$ openssl rsautl -sign -inkey rsaprivatekey.pem -in plain.txt -out signature.bin<br></code></pre><br><h4 id="rsapublickeypemsignaturebinplaintxt">用公钥匙rsapublickey.pem验证签名signature.bin，输出到文件plain.txt</h4><br><br><pre><code>$ openssl rsautl -verify -pubin -inkey  rsapublickey.pem -in signature.bin -out plain<br></code></pre><br><h4 id="rsaprivatekeypemsignaturebinplaintxt">用私匙rsaprivatekey.pem验证签名signature.bin，输出到文件plain.txt（实际上系统会取私钥里的公钥来验证）</h4><br><br><pre><code>$ openssl rsautl -verify -inkey rsapublickey.pem -in signature.bin -out plain<br></code></pre><br></ul>
-
-<h2 id="">鸣谢</h2>
-
-<h3 id="openssl">由于openssl涉及功能加密，解密，数字签名，生成随机数等知识较多，作者旨在抛砖引玉。</h3>
-  
+<h2 id="u8865_u5145"><a href="#u8865_u5145" class="headerlink" title="补充"></a>补充</h2><h3 id="RSA_u52A0_u5BC6_26amp_3B_u89E3_u5BC6_26amp_3B_u7B7E_u540D_26amp_3B_u9A8C_u8BC1"><a href="#RSA_u52A0_u5BC6_26amp_3B_u89E3_u5BC6_26amp_3B_u7B7E_u540D_26amp_3B_u9A8C_u8BC1" class="headerlink" title="RSA加密&amp;解密&amp;签名&amp;验证"></a>RSA加密&amp;解密&amp;签名&amp;验证</h3><ul>
+<li><h4 id="u4EA7_u751F1024_u4F4DRSA_u79C1_u5319_uFF0C_u75283DES_u52A0_u5BC6_u5B83_uFF0C_u53E3_u4EE4_u4E3Atrousers_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6rsaprivatekey-pem"><a href="#u4EA7_u751F1024_u4F4DRSA_u79C1_u5319_uFF0C_u75283DES_u52A0_u5BC6_u5B83_uFF0C_u53E3_u4EE4_u4E3Atrousers_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6rsaprivatekey-pem" class="headerlink" title="产生1024位RSA私匙，用3DES加密它，口令为trousers，输出到文件rsaprivatekey.pem"></a>产生1024位RSA私匙，用3DES加密它，口令为trousers，输出到文件rsaprivatekey.pem</h4><pre><code>$ openssl genrsa -out rsaprivatekey.pem -passout pass:trousers -des3 1024
+</code></pre></li>
+<li><h4 id="u91CD_u7F6E_u53E3_u4EE4_2C_u53BB_u96643DES_u52A0_u5BC6"><a href="#u91CD_u7F6E_u53E3_u4EE4_2C_u53BB_u96643DES_u52A0_u5BC6" class="headerlink" title="重置口令,去除3DES加密"></a>重置口令,去除3DES加密</h4><pre><code>$openssl rsa -in rsaprivatekey.pem -out rsaprivatekey.pem
+</code></pre></li>
+<li><h4 id="u91CD_u7F6E_u53E3_u4EE4_uFF0C_u6DFB_u52A0_u5176_u4ED6_u52A0_u5BC6"><a href="#u91CD_u7F6E_u53E3_u4EE4_uFF0C_u6DFB_u52A0_u5176_u4ED6_u52A0_u5BC6" class="headerlink" title="重置口令，添加其他加密"></a>重置口令，添加其他加密</h4><pre><code>$openssl rsa -in rsaprivatekey.pem -passout pass:yourpassword -out -aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea rsaprivatekey.pem
+</code></pre></li>
+</ul>
+<ul>
+<li><h4 id="u4ECE_u6587_u4EF6rsaprivatekey-pem_u8BFB_u53D6_u79C1_u5319_uFF0C_u7528_u53E3_u4EE4trousers_u89E3_u5BC6_uFF0C__u751F_u6210_u7684_u516C_u94A5_u5319_u8F93_u51FA_u5230_u6587_u4EF6rsapublickey-pem"><a href="#u4ECE_u6587_u4EF6rsaprivatekey-pem_u8BFB_u53D6_u79C1_u5319_uFF0C_u7528_u53E3_u4EE4trousers_u89E3_u5BC6_uFF0C__u751F_u6210_u7684_u516C_u94A5_u5319_u8F93_u51FA_u5230_u6587_u4EF6rsapublickey-pem" class="headerlink" title="从文件rsaprivatekey.pem读取私匙，用口令trousers解密， 生成的公钥匙输出到文件rsapublickey.pem"></a>从文件rsaprivatekey.pem读取私匙，用口令trousers解密， 生成的公钥匙输出到文件rsapublickey.pem</h4><pre><code>$ openssl rsa -in rsaprivatekey.pem -passin pass:trousers -pubout -out rsapubckey.pem
+</code></pre></li>
+</ul>
+<ul>
+<li><h4 id="u7528_u516C_u94A5_u5319rsapublickey-pem_u52A0_u5BC6_u6587_u4EF6plain-txt_uFF0C__u8F93_u51FA_u5230_u6587_u4EF6cipher-txt"><a href="#u7528_u516C_u94A5_u5319rsapublickey-pem_u52A0_u5BC6_u6587_u4EF6plain-txt_uFF0C__u8F93_u51FA_u5230_u6587_u4EF6cipher-txt" class="headerlink" title="用公钥匙rsapublickey.pem加密文件plain.txt， 输出到文件cipher.txt"></a>用公钥匙rsapublickey.pem加密文件plain.txt， 输出到文件cipher.txt</h4><pre><code>$ openssl rsautl -encrypt -pubin -inkey rsapublickey.pem -in plain.txt -out cipher.txt
+</code></pre></li>
+<li><h4 id="u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u52A0_u5BC6_u6587_u4EF6plain-txt_uFF0C__u8F93_u51FA_u5230_u6587_u4EF6cipher-txt_uFF08_u5B9E_u9645_u4E0A_u7CFB_u7EDF_u4F1A_u53D6_u79C1_u94A5_u91CC_u7684_u516C_u94A5_u6765_u52A0_u5BC6_uFF09"><a href="#u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u52A0_u5BC6_u6587_u4EF6plain-txt_uFF0C__u8F93_u51FA_u5230_u6587_u4EF6cipher-txt_uFF08_u5B9E_u9645_u4E0A_u7CFB_u7EDF_u4F1A_u53D6_u79C1_u94A5_u91CC_u7684_u516C_u94A5_u6765_u52A0_u5BC6_uFF09" class="headerlink" title="用私钥匙rsaprivatekey.pem加密文件plain.txt， 输出到文件cipher.txt（实际上系统会取私钥里的公钥来加密）"></a>用私钥匙rsaprivatekey.pem加密文件plain.txt， 输出到文件cipher.txt（实际上系统会取私钥里的公钥来加密）</h4><pre><code>$ openssl rsautl -encrypt -inkey rsapublickey.pem -in plain.txt -out cipher.txt
+</code></pre></li>
+<li><h4 id="u4F7F_u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u89E3_u5BC6_u5BC6_u6587cipher-txt_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt"><a href="#u4F7F_u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u89E3_u5BC6_u5BC6_u6587cipher-txt_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt" class="headerlink" title="使用私钥匙rsaprivatekey.pem解密密文cipher.txt，输出到文件plain.txt"></a>使用私钥匙rsaprivatekey.pem解密密文cipher.txt，输出到文件plain.txt</h4><pre><code>$ openssl rsautl -decrypt -inkey rsaprivatekey.pem -in cipher.txt -out plain.txt
+</code></pre></li>
+</ul>
+<ul>
+<li><h4 id="u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u7ED9_u6587_u4EF6plain-txt_u7B7E_u540D_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6signature-bin"><a href="#u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u7ED9_u6587_u4EF6plain-txt_u7B7E_u540D_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6signature-bin" class="headerlink" title="用私钥匙rsaprivatekey.pem给文件plain.txt签名，输出到文件signature.bin"></a>用私钥匙rsaprivatekey.pem给文件plain.txt签名，输出到文件signature.bin</h4><pre><code>$ openssl rsautl -sign -inkey rsaprivatekey.pem -in plain.txt -out signature.bin
+</code></pre></li>
+<li><h4 id="u7528_u516C_u94A5_u5319rsapublickey-pem_u9A8C_u8BC1_u7B7E_u540Dsignature-bin_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt"><a href="#u7528_u516C_u94A5_u5319rsapublickey-pem_u9A8C_u8BC1_u7B7E_u540Dsignature-bin_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt" class="headerlink" title="用公钥匙rsapublickey.pem验证签名signature.bin，输出到文件plain.txt"></a>用公钥匙rsapublickey.pem验证签名signature.bin，输出到文件plain.txt</h4><pre><code>$ openssl rsautl -verify -pubin -inkey  rsapublickey.pem -in signature.bin -out plain
+</code></pre></li>
+<li><h4 id="u7528_u79C1_u5319rsaprivatekey-pem_u9A8C_u8BC1_u7B7E_u540Dsignature-bin_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt_uFF08_u5B9E_u9645_u4E0A_u7CFB_u7EDF_u4F1A_u53D6_u79C1_u94A5_u91CC_u7684_u516C_u94A5_u6765_u9A8C_u8BC1_uFF09"><a href="#u7528_u79C1_u5319rsaprivatekey-pem_u9A8C_u8BC1_u7B7E_u540Dsignature-bin_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt_uFF08_u5B9E_u9645_u4E0A_u7CFB_u7EDF_u4F1A_u53D6_u79C1_u94A5_u91CC_u7684_u516C_u94A5_u6765_u9A8C_u8BC1_uFF09" class="headerlink" title="用私匙rsaprivatekey.pem验证签名signature.bin，输出到文件plain.txt（实际上系统会取私钥里的公钥来验证）"></a>用私匙rsaprivatekey.pem验证签名signature.bin，输出到文件plain.txt（实际上系统会取私钥里的公钥来验证）</h4><pre><code>$ openssl rsautl -verify -inkey rsapublickey.pem -in signature.bin -out plain
+</code></pre></li>
+</ul>
+<h2 id="u9E23_u8C22"><a href="#u9E23_u8C22" class="headerlink" title="鸣谢"></a>鸣谢</h2><h3 id="u7531_u4E8Eopenssl_u6D89_u53CA_u529F_u80FD_u52A0_u5BC6_uFF0C_u89E3_u5BC6_uFF0C_u6570_u5B57_u7B7E_u540D_uFF0C_u751F_u6210_u968F_u673A_u6570_u7B49_u77E5_u8BC6_u8F83_u591A_uFF0C_u4F5C_u8005_u65E8_u5728_u629B_u7816_u5F15_u7389_u3002"><a href="#u7531_u4E8Eopenssl_u6D89_u53CA_u529F_u80FD_u52A0_u5BC6_uFF0C_u89E3_u5BC6_uFF0C_u6570_u5B57_u7B7E_u540D_uFF0C_u751F_u6210_u968F_u673A_u6570_u7B49_u77E5_u8BC6_u8F83_u591A_uFF0C_u4F5C_u8005_u65E8_u5728_u629B_u7816_u5F15_u7389_u3002" class="headerlink" title="由于openssl涉及功能加密，解密，数字签名，生成随机数等知识较多，作者旨在抛砖引玉。"></a>由于openssl涉及功能加密，解密，数字签名，生成随机数等知识较多，作者旨在抛砖引玉。</h3>  
 	</div>
 		<footer class="article-footer clearfix">
 
@@ -222,7 +193,7 @@ $ openssl ca -in userreq.pem -out usercert.pem -keyfile cakey.pem -cert cacert.p
 
 <div class="article-share" id="share">
 
-  <div data-url="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles/2016/02/03/OpenSSL与证书的制作/" data-title="海青iOSNote" data-tsina="null" class="share clearfix">
+  <div data-url="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles/2016/02/03/OpenSSL与证书的制作/" data-title="OpenSSL与证书的制作 | 海青iOSNote" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -252,7 +223,7 @@ $ openssl ca -in userreq.pem -out usercert.pem -keyfile cakey.pem -cert cacert.p
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目錄</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#title_openssl"><span class="toc-number">1.</span> <span class="toc-text">title: OpenSSL与证书的制作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">2.</span> <span class="toc-text">证书标准</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#"><span class="toc-number">2.1.</span> <span class="toc-text">编码格式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">3.</span> <span class="toc-text">证书编码的转换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">4.</span> <span class="toc-text">自签名的证书</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#"><span class="toc-number">4.0.1.</span> <span class="toc-text">我们有两种方式生成根证书</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#"><span class="toc-number">4.0.2.</span> <span class="toc-text">接下来我们使用生成的根证书来签发证书</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">5.</span> <span class="toc-text">补充</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#rsa"><span class="toc-number">5.1.</span> <span class="toc-text">RSA加密&解密&签名&验证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1024rsa3destrousersrsaprivatekeypem"><span class="toc-number">5.1.1.</span> <span class="toc-text">产生1024位RSA私匙，用3DES加密它，口令为trousers，输出到文件rsaprivatekey.pem</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3des"><span class="toc-number">5.1.2.</span> <span class="toc-text">重置口令,去除3DES加密</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#"><span class="toc-number">5.1.3.</span> <span class="toc-text">重置口令，添加其他加密</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemtrousers_rsapublickeypem"><span class="toc-number">5.1.4.</span> <span class="toc-text">从文件rsaprivatekey.pem读取私匙，用口令trousers解密， 生成的公钥匙输出到文件rsapublickey.pem</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsapublickeypemplaintxt_ciphertxt"><span class="toc-number">5.1.5.</span> <span class="toc-text">用公钥匙rsapublickey.pem加密文件plain.txt， 输出到文件cipher.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemplaintxt_ciphertxt"><span class="toc-number">5.1.6.</span> <span class="toc-text">用私钥匙rsaprivatekey.pem加密文件plain.txt， 输出到文件cipher.txt（实际上系统会取私钥里的公钥来加密）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemciphertxtplaintxt"><span class="toc-number">5.1.7.</span> <span class="toc-text">使用私钥匙rsaprivatekey.pem解密密文cipher.txt，输出到文件plain.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemplaintxtsignaturebin"><span class="toc-number">5.1.8.</span> <span class="toc-text">用私钥匙rsaprivatekey.pem给文件plain.txt签名，输出到文件signature.bin</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsapublickeypemsignaturebinplaintxt"><span class="toc-number">5.1.9.</span> <span class="toc-text">用公钥匙rsapublickey.pem验证签名signature.bin，输出到文件plain.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rsaprivatekeypemsignaturebinplaintxt"><span class="toc-number">5.1.10.</span> <span class="toc-text">用私匙rsaprivatekey.pem验证签名signature.bin，输出到文件plain.txt（实际上系统会取私钥里的公钥来验证）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#"><span class="toc-number">6.</span> <span class="toc-text">鸣谢</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#openssl"><span class="toc-number">6.1.</span> <span class="toc-text">由于openssl涉及功能加密，解密，数字签名，生成随机数等知识较多，作者旨在抛砖引玉。</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#u8BC1_u4E66_u6807_u51C6"><span class="toc-number">1.</span> <span class="toc-text">证书标准</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#u7F16_u7801_u683C_u5F0F"><span class="toc-number">1.1.</span> <span class="toc-text">编码格式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#u8BC1_u4E66_u7F16_u7801_u7684_u8F6C_u6362"><span class="toc-number">2.</span> <span class="toc-text">证书编码的转换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#u81EA_u7B7E_u540D_u7684_u8BC1_u4E66"><span class="toc-number">3.</span> <span class="toc-text">自签名的证书</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#u6211_u4EEC_u6709_u4E24_u79CD_u65B9_u5F0F_u751F_u6210_u6839_u8BC1_u4E66"><span class="toc-number">3.0.1.</span> <span class="toc-text">我们有两种方式生成根证书</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u63A5_u4E0B_u6765_u6211_u4EEC_u4F7F_u7528_u751F_u6210_u7684_u6839_u8BC1_u4E66_u6765_u7B7E_u53D1_u8BC1_u4E66"><span class="toc-number">3.0.2.</span> <span class="toc-text">接下来我们使用生成的根证书来签发证书</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#u8865_u5145"><span class="toc-number">4.</span> <span class="toc-text">补充</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#RSA_u52A0_u5BC6_26amp_3B_u89E3_u5BC6_26amp_3B_u7B7E_u540D_26amp_3B_u9A8C_u8BC1"><span class="toc-number">4.1.</span> <span class="toc-text">RSA加密&解密&签名&验证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#u4EA7_u751F1024_u4F4DRSA_u79C1_u5319_uFF0C_u75283DES_u52A0_u5BC6_u5B83_uFF0C_u53E3_u4EE4_u4E3Atrousers_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6rsaprivatekey-pem"><span class="toc-number">4.1.1.</span> <span class="toc-text">产生1024位RSA私匙，用3DES加密它，口令为trousers，输出到文件rsaprivatekey.pem</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u91CD_u7F6E_u53E3_u4EE4_2C_u53BB_u96643DES_u52A0_u5BC6"><span class="toc-number">4.1.2.</span> <span class="toc-text">重置口令,去除3DES加密</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u91CD_u7F6E_u53E3_u4EE4_uFF0C_u6DFB_u52A0_u5176_u4ED6_u52A0_u5BC6"><span class="toc-number">4.1.3.</span> <span class="toc-text">重置口令，添加其他加密</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u4ECE_u6587_u4EF6rsaprivatekey-pem_u8BFB_u53D6_u79C1_u5319_uFF0C_u7528_u53E3_u4EE4trousers_u89E3_u5BC6_uFF0C__u751F_u6210_u7684_u516C_u94A5_u5319_u8F93_u51FA_u5230_u6587_u4EF6rsapublickey-pem"><span class="toc-number">4.1.4.</span> <span class="toc-text">从文件rsaprivatekey.pem读取私匙，用口令trousers解密， 生成的公钥匙输出到文件rsapublickey.pem</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u516C_u94A5_u5319rsapublickey-pem_u52A0_u5BC6_u6587_u4EF6plain-txt_uFF0C__u8F93_u51FA_u5230_u6587_u4EF6cipher-txt"><span class="toc-number">4.1.5.</span> <span class="toc-text">用公钥匙rsapublickey.pem加密文件plain.txt， 输出到文件cipher.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u52A0_u5BC6_u6587_u4EF6plain-txt_uFF0C__u8F93_u51FA_u5230_u6587_u4EF6cipher-txt_uFF08_u5B9E_u9645_u4E0A_u7CFB_u7EDF_u4F1A_u53D6_u79C1_u94A5_u91CC_u7684_u516C_u94A5_u6765_u52A0_u5BC6_uFF09"><span class="toc-number">4.1.6.</span> <span class="toc-text">用私钥匙rsaprivatekey.pem加密文件plain.txt， 输出到文件cipher.txt（实际上系统会取私钥里的公钥来加密）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u4F7F_u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u89E3_u5BC6_u5BC6_u6587cipher-txt_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt"><span class="toc-number">4.1.7.</span> <span class="toc-text">使用私钥匙rsaprivatekey.pem解密密文cipher.txt，输出到文件plain.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u79C1_u94A5_u5319rsaprivatekey-pem_u7ED9_u6587_u4EF6plain-txt_u7B7E_u540D_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6signature-bin"><span class="toc-number">4.1.8.</span> <span class="toc-text">用私钥匙rsaprivatekey.pem给文件plain.txt签名，输出到文件signature.bin</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u516C_u94A5_u5319rsapublickey-pem_u9A8C_u8BC1_u7B7E_u540Dsignature-bin_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt"><span class="toc-number">4.1.9.</span> <span class="toc-text">用公钥匙rsapublickey.pem验证签名signature.bin，输出到文件plain.txt</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#u7528_u79C1_u5319rsaprivatekey-pem_u9A8C_u8BC1_u7B7E_u540Dsignature-bin_uFF0C_u8F93_u51FA_u5230_u6587_u4EF6plain-txt_uFF08_u5B9E_u9645_u4E0A_u7CFB_u7EDF_u4F1A_u53D6_u79C1_u94A5_u91CC_u7684_u516C_u94A5_u6765_u9A8C_u8BC1_uFF09"><span class="toc-number">4.1.10.</span> <span class="toc-text">用私匙rsaprivatekey.pem验证签名signature.bin，输出到文件plain.txt（实际上系统会取私钥里的公钥来验证）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#u9E23_u8C22"><span class="toc-number">5.</span> <span class="toc-text">鸣谢</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#u7531_u4E8Eopenssl_u6D89_u53CA_u529F_u80FD_u52A0_u5BC6_uFF0C_u89E3_u5BC6_uFF0C_u6570_u5B57_u7B7E_u540D_uFF0C_u751F_u6210_u968F_u673A_u6570_u7B49_u77E5_u8BC6_u8F83_u591A_uFF0C_u4F5C_u8005_u65E8_u5728_u629B_u7816_u5F15_u7389_u3002"><span class="toc-number">5.1.</span> <span class="toc-text">由于openssl涉及功能加密，解密，数字签名，生成随机数等知识较多，作者旨在抛砖引玉。</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
