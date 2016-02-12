@@ -1,0 +1,395 @@
+
+  
+    <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  
+    <title>tags | 海青iOSNote</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="xuhaiqing">
+    
+    <meta name="description" content="Runtime 运行时基本语法及原理我们查看原文件，可以看到Class其实是objc_class结构体指针
+typedef struct objc_class *Class;
+
+/// Represents an instance of a class.
+struct objc_object {
+ ">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="海青iOSNote" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+</head>
+
+      <body>
+        <header>
+          <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="海青iOSNote" title="海青iOSNote"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="海青iOSNote">海青iOSNote</a></h1>
+				<h2 class="blog-motto">Life is to love</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜單">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="/search/index.html" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" autocomplete="off" name="q" maxlength="20" placeholder="搜索" />
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+        </header>
+        <div id="container">
+          <div id="main" class="page" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/tags/index.html" title="tags" itemprop="url">tags</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles" title="xuhaiqing">xuhaiqing</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-02-04T03:35:31.000Z" itemprop="datePublished">2016-02-04</time>
+    更新日期:<time datetime="2016-02-04T03:36:27.000Z" itemprop="dateModified">2016-02-04</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<h2 id="Runtime__u8FD0_u884C_u65F6_u57FA_u672C_u8BED_u6CD5_u53CA_u539F_u7406"><a href="#Runtime__u8FD0_u884C_u65F6_u57FA_u672C_u8BED_u6CD5_u53CA_u539F_u7406" class="headerlink" title="Runtime 运行时基本语法及原理"></a>Runtime 运行时基本语法及原理</h2><p>我们查看<objc objc.h="">原文件，可以看到Class其实是objc_class结构体指针</objc></p>
+<pre><code>typedef struct objc_class *Class;
+
+/// Represents an instance of a class.
+struct objc_object {
+    Class isa  OBJC_ISA_AVAILABILITY;
+};
+</code></pre><p>这就是OC与其它语言很大不同，由 <strong>Represents an instance of a class</strong>, <code>objc_class</code>结构体构成类的实例，其中还涉及metaObject，这里就不详细介绍，有兴趣的同学可以看 <a href="http://chun.tips/blog/2014/11/05/bao-gen-wen-di-objective%5Bnil%5Dc-runtime-(2" target="_blank" rel="external">这篇文章</a>%5Bnil%5D-object-and-class-and-meta-class/),看这篇文章前需要弄清Object，Class，Meta Class的关系。<br>我这里简要总结：objc_object 通过isa指向自己的类地址，这样就可以发消息到类，当然类方法是储存在Meta Class的方法列表中的。［NSObject class］ 指向Meta NSObject，而NSObject的isa指向自己，反过来Meta NSObject 的父类指向NSObject。其实所有对象都是objc_object结构体，而objc_class结构体继承objc_object。</p>
+<p>我们再看看<objc runtime.h="">,这里内容较多，我们一一总结。</objc></p>
+<blockquote>
+<p><code>id object_copy(id obj, size_t size)</code> <strong>复制一个对象–OBJC_ARC_UNAVAILABLE &gt;ARC下不可用</strong></p>
+<p><code>d object_dispose(id obj)</code> <strong>释放一个对象–OBJC_ARC_UNAVAILABLE &gt;ARC下不可用</strong></p>
+<p><code>Class object_getClass(id obj)</code><strong>获取对象的类</strong></p>
+<p><code>Class object_setClass(id obj, Class cls)</code> <strong>修改对象isa指向的类</strong></p>
+<p><code>BOOL object_isClass(id obj)</code> <strong>判断一个对象是不是Class或者MetaClass</strong></p>
+<p><code>const char *object_getClassName(id obj)</code> <strong>获取对象的类的C字符串</strong></p>
+<p><code>void *object_getIndexedIvars(id obj)</code> <strong>获取成员变量的索引，<br>可怜ARC下不可用,不过查看源码，我们可以通过</strong><br><code>((char *) obj) + ((struct objc_class *) obj-&gt;isa)-&gt;instance_size</code>获取</p>
+<p><code>id object_getIvar(id obj, Ivar ivar)</code>获取对象成员变量的值</p>
+<p><code>void object_setIvar(id obj, Ivar ivar, id value)</code>设置成员变量的值,ARC下不可用</p>
+<p><code>Class objc_getClass(const char *name)</code></p>
+<p><code>Class objc_getMetaClass(const char *name)</code></p>
+</blockquote>
+<h2 id="Runtime__u7684_u8FD0_u7528_u573A_u666F"><a href="#Runtime__u7684_u8FD0_u7528_u573A_u666F" class="headerlink" title="Runtime 的运用场景"></a>Runtime 的运用场景</h2><h4 id="u63D0_u9AD8_u4EE3_u7801_u7684_u8FD0_u884C_u6548_u7387"><a href="#u63D0_u9AD8_u4EE3_u7801_u7684_u8FD0_u884C_u6548_u7387" class="headerlink" title="提高代码的运行效率"></a>提高代码的运行效率</h4><p>通过运行时调用锁的时地效率，详解见注释，在外面直接调用即可</p>
+<pre><code>//
+//  hdf_TestLock.m
+//  RuntimeDemo
+//
+//  Created by xuhaiqing on 16/1/15.
+//  Copyright © 2016年 huangyibiao. All rights reserved.
+//
+
+#import &quot;hdf_TestLock.h&quot;
+#import &lt;objc/runtime.h&gt;
+#import &lt;objc/message.h&gt;
+#import &lt;libkern/OSAtomic.h&gt;
+#import &lt;pthread.h&gt;
+#define ITERATION (1024 * 1024 *32)
+@implementation hdf_TestLock
+
++(void) start {
+//初始化
+double then , now;
+unsigned int  i ;
+OSSpinLock osSpinLock = 0;
+pthread_mutex_t pthread = PTHREAD_MUTEX_INITIALIZER;
+NSLock *lock = [NSLock new];
+NSRecursiveLock *recursiveLock = [NSRecursiveLock new];
+
+then = CFAbsoluteTimeGetCurrent();
+//NSRecursiveLock
+for (i = 0; i &lt; ITERATION ; i ++) {
+    @autoreleasepool {
+        [recursiveLock lock];
+        [recursiveLock unlock];
+    }
+}
+now = CFAbsoluteTimeGetCurrent();
+NSLog(@&quot;NSRecursiveLock  : %f sec\n&quot;,now - then);
+then = CFAbsoluteTimeGetCurrent();
+then = CFAbsoluteTimeGetCurrent();
+
+//NSLock
+for (i = 0; i &lt; ITERATION ; i ++) {
+    @autoreleasepool {
+        [lock lock];
+        [lock unlock];
+    }
+}
+now = CFAbsoluteTimeGetCurrent();
+NSLog(@&quot;NSLock  : %f sec\n&quot;,now - then);
+
+//直接运行时调用
+//重置时间
+then = CFAbsoluteTimeGetCurrent();
+// IMP startlock =  [NSLock instanceMethodForSelector:@selector(lock)];
+//IMP endlock  = [NSLock instanceMethodForSelector:@selector(unlock)];
+
+for (i = 0; i &lt; ITERATION; i ++) {
+    @autoreleasepool {
+        ((void (*)(id,SEL))objc_msgSend)((id)lock,@selector(lock));
+        ((void (*)(id,SEL))objc_msgSend)((id)lock,@selector(unlock));
+    }
+}
+
+now = CFAbsoluteTimeGetCurrent();
+NSLog(@&quot;NSLock Runtime  : %f sec\n&quot;,now - then);
+
+//pthread_mutex_unlock
+//重置时间
+then = CFAbsoluteTimeGetCurrent();
+for (i = 0; i &lt; ITERATION; i ++) {
+    @autoreleasepool {
+        pthread_mutex_lock(&amp;pthread);
+        pthread_mutex_unlock(&amp;pthread);
+    }
+}
+now = CFAbsoluteTimeGetCurrent();
+NSLog(@&quot;pthread_mutex_lock  : %f sec\n&quot;,now - then);
+
+//OSSpinLockLock
+//重置时间
+then = CFAbsoluteTimeGetCurrent();
+
+for (i = 0; i &lt; ITERATION; i ++) {
+    @autoreleasepool {
+        OSSpinLockLock(&amp;osSpinLock);
+        OSSpinLockUnlock(&amp;osSpinLock);
+    }
+}
+
+now = CFAbsoluteTimeGetCurrent();
+NSLog(@&quot;OSSpinLockLock  : %f sec\n&quot;,now - then);
+
+//重置时间
+then = CFAbsoluteTimeGetCurrent();
+
+//@synchronized
+for (i = 0; i &lt; ITERATION; i ++) {
+    @autoreleasepool {
+        @synchronized(self) {
+
+        }
+    }
+}
+
+now = CFAbsoluteTimeGetCurrent();
+NSLog(@&quot;synchronized  : %f sec\n&quot;,now - then);
+
+//重置时间
+then = CFAbsoluteTimeGetCurrent();
+
+//使用队列模拟锁
+dispatch_queue_t queue = dispatch_queue_create(&quot;com.xuhaiqing.dreamwishing&quot;, DISPATCH_QUEUE_SERIAL);
+for (i = 0; i &lt; ITERATION; i ++) {
+    dispatch_sync(queue, ^{
+
+    });
+}
+now = CFAbsoluteTimeGetCurrent();
+NSLog(@&quot;DISPATCH_QUEUE_SERIAL  : %f sec\n&quot;,now - then);
+
+}
+
+@end
+</code></pre><p> 调研日志：</p>
+<pre><code>NSRecursiveLock  : 2.331977 sec
+NSLock  : 2.176556 sec
+NSLock Runtime  : 2.018537 sec
+pthread_mutex_lock  : 1.232123 sec
+OSSpinLockLock  : 0.878035 sec
+synchronized  : 3.668929 sec
+DISPATCH_QUEUE_SERIAL  : 1.382852 sec
+</code></pre><p><strong>从上面调研结果可以看出：</strong><br>直接使用运行时的确提高了代码的运行效率，但是对开发者的要求提高了，一般在框架里使用。<br>自旋锁OSSpinLock效率 &gt;  互斥锁pthread_mutex_lock &gt; DISPATCH_QUEUE_SERIAL &gt; NSLock Runtime &gt; NSLock Runtime &gt; NSLock &gt; NSRecursiveLock &gt; synchronized,其中DISPATCH_QUEUE_SERIAL是使用串行队列模拟的锁的功能。</p>
+<ul>
+<li>互斥锁：当上一个线程的任务没有执行完毕的时候（被锁住），那么下一个线程会进入睡眠状态等待任务执行完毕，当上一个线程的任务执行完毕，下一个线程会自动唤醒然后执行任务。</li>
+<li>自旋锁：当上一个线程的任务没有执行完毕的时候（被锁住），那么下一个线程会一直等待（不会睡眠），当上一个线程的任务执行完毕，下一个线程会立即执行。(这包括我们使用属性修饰符的atomic)</li>
+</ul>
+<p>比较好的文章：</p>
+<p><a href="http://southpeak.github.io/blog/2014/10/17/osatomicyuan-zi-cao-zuo/" target="_blank" rel="external">南峰子的技术博客 OSAmatic</a> <a href="http://www.infoq.com/cn/articles/atomic-operation/" target="_blank" rel="external">结合这篇文章</a> 来理解原子操作是如何实现的</p>
+<p><a href="http://southpeak.github.io/blog/2014/11/06/objective-c-runtime-yun-xing-shi-zhi-si-:method-swizzling/" target="_blank" rel="external">南峰子的技术博客 Method Swizzing</a></p>
+<p><a href="http://zhangbuhuai.com/2015/04/17/basics-about-thread-in-iOS/" target="_blank" rel="external">这里说到多线程与锁基础概念</a></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles/tags/index.html" data-title="tags | 海青iOSNote" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+	
+<section class="comment">
+	<div class="ds-thread"></div>
+</section>
+
+</div>  
+        </div>
+        <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> Hello ,我是海青！ <br/>
+			Life is to love.</p>
+	</section>
+	 
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://www.jianshu.com/users/c2cf7afe4f85/latest_articles" target="_blank" title="xuhaiqing">xuhaiqing</a>
+		
+		</p>
+</div>
+</footer>
+        <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+      </body>
+     </html>
+     
